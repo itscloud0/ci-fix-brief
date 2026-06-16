@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ci-fix-brief"
+version = "0.1.0"
+description = "Turn noisy CI logs into compact repair briefs for coding agents."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Ilias Sorokin" }]
+keywords = ["ci", "github-actions", "coding-agents", "developer-tools", "log-analysis"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Build Tools",
+  "Topic :: Software Development :: Testing",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/itscloud0/ci-fix-brief"
+Issues = "https://github.com/itscloud0/ci-fix-brief/issues"
+
+[project.scripts]
+ci-fix-brief = "ci_fix_brief.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

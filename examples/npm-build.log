@@ -1,0 +1,9 @@
+Run npm test
+> agent-dashboard@0.1.0 test
+> vitest run
+
+FAIL src/parser.test.ts > parses compact frontmatter
+Error: expected "ready" to equal "draft"
+Tests:       1 failed, 18 passed, 19 total
+Time:        2.18s
+Error: Process completed with exit code 1.
