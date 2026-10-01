@@ -1,0 +1,87 @@
+name: ci-fix-brief
+description: Turn a failed GitHub Actions run into a compact repair brief artifact.
+author: Ilia Sorokin
+
+inputs:
+  log-file:
+    description: Existing log file to analyze. When set, GitHub run log lookup is skipped.
+    required: false
+    default: ""
+  run-id:
+    description: Failed GitHub Actions run ID. Defaults to the current workflow run.
+    required: false
+    default: ""
+  repository:
+    description: owner/repository for the failed run. Defaults to the current repository.
+    required: false
+    default: ""
+  github-token:
+    description: Token used by gh to read the failed run log.
+    required: false
+    default: ""
+  output:
+    description: Generated repair brief path.
+    required: false
+    default: CI_FIX_BRIEF.md
+  artifact-name:
+    description: Uploaded artifact name.
+    required: false
+    default: ci-fix-brief
+  retention-days:
+    description: Number of days to retain the uploaded artifact.
+    required: false
+    default: "7"
+
+runs:
+  using: composite
+  steps:
+    - name: Collect failed CI log
+      shell: bash
+      env:
+        CI_FIX_BRIEF_LOG_FILE: ${{ inputs.log-file }}
+        CI_FIX_BRIEF_REPOSITORY: ${{ inputs.repository }}
+        CI_FIX_BRIEF_RUN_ID: ${{ inputs.run-id }}
+        GH_TOKEN: ${{ inputs.github-token || github.token }}
+      run: |
+        set -euo pipefail
+
+        log_path="$RUNNER_TEMP/ci-fix-brief.log"
+        if [ -n "$CI_FIX_BRIEF_LOG_FILE" ]; then
+          if [ ! -f "$CI_FIX_BRIEF_LOG_FILE" ]; then
+            echo "::error::ci-fix-brief log file not found: $CI_FIX_BRIEF_LOG_FILE"
+            exit 1
+          fi
+          cp "$CI_FIX_BRIEF_LOG_FILE" "$log_path"
+          exit 0
+        fi
+
+        if ! command -v gh >/dev/null 2>&1; then
+          echo "::error::ci-fix-brief requires GitHub CLI (gh) when log-file is not set"
+          exit 1
+        fi
+
+        run_id="${CI_FIX_BRIEF_RUN_ID:-${GITHUB_RUN_ID:-}}"
+        repository="${CI_FIX_BRIEF_REPOSITORY:-${GITHUB_REPOSITORY:-}}"
+        if [ -z "$run_id" ] || [ -z "$repository" ]; then
+          echo "::error::run-id and repository are required outside a GitHub Actions run"
+          exit 1
+        fi
+
+        gh run view "$run_id" --repo "$repository" --log-failed > "$log_path"
+
+    - name: Generate CI repair brief
+      shell: bash
+      env:
+        PYTHONPATH: ${{ github.action_path }}/src
+        CI_FIX_BRIEF_OUTPUT: ${{ inputs.output }}
+      run: |
+        set -euo pipefail
+        python -m ci_fix_brief "$RUNNER_TEMP/ci-fix-brief.log" --output "$CI_FIX_BRIEF_OUTPUT"
+
+    - name: Upload CI repair brief
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.output }}
+        if-no-files-found: error
+        retention-days: ${{ inputs.retention-days }}

@@ -1,0 +1,22 @@
+name: CI failure brief
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  brief:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate CI repair brief
+        uses: itscloud0/ci-fix-brief@main # Pin to a commit or release in production.
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          repository: ${{ github.event.workflow_run.repository.full_name }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}

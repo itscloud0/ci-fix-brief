@@ -122,6 +122,36 @@ ci-fix-brief failed-run.log --format json | python -m json.tool
 - Full observability tools are deeper, but they require services and setup. This tool is local-first and small.
 - Secret scanners are stricter. `ci-fix-brief` only redacts common token shapes in rendered output.
 
+## GitHub Action
+
+Generate a brief from a completed failed workflow and upload `CI_FIX_BRIEF.md`
+as an artifact. Copy `examples/github-actions/ci-failure-brief.yml` into the
+target repository; the workflow needs `actions: read` so `gh` can read the
+failed run log.
+
+```yaml
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  brief:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: itscloud0/ci-fix-brief@main # Pin to a commit or release in production.
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          repository: ${{ github.event.workflow_run.repository.full_name }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+The action also accepts `log-file` when a workflow already saves or produces a
+log. It runs locally from the repository source, makes no model calls, uses the
+GitHub CLI only for failed-run log lookup, and uploads the generated brief with
+a seven-day default retention. Pin the `uses` reference to a commit or release
+when adding it to a production workflow.
+
 ## Limitations
 
 - Detection is heuristic and focused on common CI/test log shapes.
@@ -135,7 +165,6 @@ ci-fix-brief failed-run.log --format json | python -m json.tool
 - Add a `gh run view` helper mode that shells out to GitHub CLI when available.
 - Add pattern fixtures for Go, Rust, Java, and Playwright failures.
 - Add SARIF-like JSON output for downstream tools.
-- Add a GitHub Action wrapper that uploads the brief as an artifact.
 
 ## Contributing
 
