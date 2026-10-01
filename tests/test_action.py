@@ -35,6 +35,7 @@ class ActionTests(unittest.TestCase):
 
     def test_ci_exercises_supplied_log_action_path(self):
         self.assertIn("action-smoke:", self.workflow)
+        self.assertIn("if: github.event_name == 'push'", self.workflow)
         self.assertIn("uses: ./", self.workflow)
         self.assertIn("log-file: examples/failing-pytest.log", self.workflow)
         self.assertIn("artifact-name: ci-fix-brief-action-smoke-", self.workflow)
