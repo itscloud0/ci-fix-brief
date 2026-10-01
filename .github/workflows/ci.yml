@@ -28,3 +28,19 @@ jobs:
 
       - name: Smoke test CLI
         run: ci-fix-brief examples/failing-pytest.log --format json
+
+  action-smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Exercise GitHub Action with supplied log
+        uses: ./
+        with:
+          log-file: examples/failing-pytest.log
+          artifact-name: ci-fix-brief-action-smoke-${{ github.run_id }}
+          retention-days: 1

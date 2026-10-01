@@ -6,6 +6,8 @@ All notable changes to this project will be documented here.
 
 - Added a GitHub Actions wrapper that reads a failed run log and uploads
   `CI_FIX_BRIEF.md` as a retention-controlled artifact.
+- Added a public CI smoke job that exercises the supplied-log Action path and
+  verifies artifact generation on every workflow run.
 
 ## v0.1.0 - 2026-06-16
 

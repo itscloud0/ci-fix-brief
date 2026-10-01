@@ -11,6 +11,7 @@ class ActionTests(unittest.TestCase):
         self.example = (ROOT / "examples/github-actions/ci-failure-brief.yml").read_text(
             encoding="utf-8"
         )
+        self.workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
 
     def test_action_supports_supplied_logs_and_failed_run_lookup(self):
         self.assertIn("log-file:", self.action)
@@ -31,6 +32,12 @@ class ActionTests(unittest.TestCase):
         self.assertIn("conclusion == 'failure'", self.example)
         self.assertIn("actions: read", self.example)
         self.assertIn("github.event.workflow_run.id", self.example)
+
+    def test_ci_exercises_supplied_log_action_path(self):
+        self.assertIn("action-smoke:", self.workflow)
+        self.assertIn("uses: ./", self.workflow)
+        self.assertIn("log-file: examples/failing-pytest.log", self.workflow)
+        self.assertIn("artifact-name: ci-fix-brief-action-smoke-", self.workflow)
 
 
 if __name__ == "__main__":
