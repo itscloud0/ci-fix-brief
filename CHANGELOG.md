@@ -4,6 +4,9 @@ All notable changes to this project will be documented here.
 
 ## Unreleased
 
+- Detect named Go test failures and subtests; add synthetic assertion and panic
+  fixtures with deterministic Markdown/JSON coverage and passing-log checks.
+
 - Added a GitHub Actions wrapper that reads a failed run log and uploads
   `CI_FIX_BRIEF.md` as a retention-controlled artifact.
 - Added a public CI smoke job that exercises the supplied-log Action path and

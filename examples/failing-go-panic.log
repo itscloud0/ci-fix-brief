@@ -1,0 +1,9 @@
+Run go test ./...
+=== RUN   TestConfig
+--- FAIL: TestConfig (0.00s)
+panic: missing required configuration [recovered]
+
+example.com/synthetic/config.TestConfig(0xc000000000)
+    /workspace/synthetic/config_test.go:12 +0x1
+FAIL	example.com/synthetic/config	0.005s
+FAIL

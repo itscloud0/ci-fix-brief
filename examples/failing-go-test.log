@@ -1,0 +1,10 @@
+Run go test ./...
+=== RUN   TestHealthcheck
+    health_test.go:18: expected status 200, got 503
+--- FAIL: TestHealthcheck (0.00s)
+=== RUN   TestHealthcheck/ready
+    health_test.go:27: expected ready, got unavailable
+    --- FAIL: TestHealthcheck/ready (0.00s)
+FAIL
+FAIL	example.com/synthetic/health	0.004s
+FAIL

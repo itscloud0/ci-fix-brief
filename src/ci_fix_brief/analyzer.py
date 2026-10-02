@@ -32,6 +32,11 @@ TEST_SUMMARY_PATTERNS = [
 
 FINDING_PATTERNS = [
     (
+        re.compile(r"^--- FAIL:\s+(?P<msg>\S+)(?:\s+\([0-9.]+s\))?$"),
+        "test",
+        "error",
+    ),
+    (
         re.compile(r"\b(ModuleNotFoundError|ImportError):\s*(?P<msg>.+)", re.IGNORECASE),
         "dependency",
         "error",

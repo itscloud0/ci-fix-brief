@@ -107,6 +107,17 @@ Use JSON in another script:
 ci-fix-brief failed-run.log --format json | python -m json.tool
 ```
 
+Summarize Go test assertion failures, subtests, and panics:
+
+```bash
+ci-fix-brief examples/failing-go-test.log
+ci-fix-brief examples/failing-go-panic.log --format json
+```
+
+These synthetic fixtures show named failing tests with nearby assertion or panic
+context. Detection covers plain `go test` text; `go test -json` and Go compiler
+diagnostics are not parsed specially.
+
 ## Common Use Cases
 
 - Paste a compact CI failure brief into a coding-agent repair prompt.
@@ -163,7 +174,7 @@ when adding it to a production workflow.
 ## Roadmap
 
 - Add a `gh run view` helper mode that shells out to GitHub CLI when available.
-- Add pattern fixtures for Go, Rust, Java, and Playwright failures.
+- Add pattern fixtures for Rust, Java, and Playwright failures.
 - Add SARIF-like JSON output for downstream tools.
 
 ## Contributing
