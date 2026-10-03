@@ -65,6 +65,46 @@ class AnalyzerTests(unittest.TestCase):
         self.assertIn("authorization=[REDACTED]", markdown)
         self.assertNotIn("visible-value", markdown)
 
+    def test_rust_assertion_fixture_keeps_test_location_and_summary(self):
+        log = (Path(__file__).resolve().parents[1] / "examples/failing-rust-test.log").read_text()
+        brief = analyze_log(log, source="rust-test.log", context_lines=3)
+        self.assertEqual(brief.commands, ["cargo test"])
+        self.assertEqual([(f.category, f.message, f.line) for f in brief.findings],
+                         [("test", "checks::status_code", 4),
+                          ("runtime", "panicked at src/health.rs:24:5:", 9),
+                          ("runtime", "test failed, to rerun pass `--lib`", 20)])
+        self.assertIn("left: 503", "\n".join(brief.findings[1].context))
+        self.assertIn("right: 200", "\n".join(brief.findings[1].context))
+        self.assertEqual(brief.test_summaries, [log.splitlines()[17]])
+        self.assertIn("focused failing test", " ".join(brief.next_steps))
+        payload = json.loads(render_json(brief))
+        self.assertEqual(payload["findings"][0]["message"], "checks::status_code")
+        self.assertIn("src/health.rs:24:5", render_markdown(brief))
+        self.assertEqual(render_json(brief), render_json(analyze_log(
+            log, source="rust-test.log", context_lines=3)))
+
+    def test_rust_panic_fixture_preserves_reason_and_redacts_context(self):
+        log = (Path(__file__).resolve().parents[1] / "examples/failing-rust-panic.log").read_text()
+        brief = analyze_log(log)
+        self.assertEqual(brief.commands, ["cargo test --test configuration"])
+        self.assertEqual(brief.findings[0].message, "config::requires_endpoint")
+        self.assertEqual(brief.findings[1].line, 8)
+        self.assertIn("missing endpoint", "\n".join(brief.findings[1].context))
+        self.assertIn("tests/configuration.rs:9:5", render_markdown(brief))
+        self.assertEqual(len(brief.test_summaries), 1)
+        secret_log = log.replace("missing endpoint", "password=synthetic-value missing endpoint")
+        self.assertNotIn("synthetic-value", render_json(analyze_log(secret_log)))
+        self.assertIn("password=[REDACTED]", render_markdown(analyze_log(secret_log)))
+
+    def test_passing_and_ignored_rust_tests_do_not_create_findings(self):
+        brief = analyze_log("Run cargo test\ntest checks::healthy ... ok\n"
+                            "test checks::planned ... ignored\n"
+                            "test checks::expected_panic - should panic ... ok\n"
+                            "test result: ok. 2 passed; 0 failed; 1 ignored; 0 measured; "
+                            "0 filtered out; finished in 0.00s\n")
+        self.assertEqual(brief.findings, [])
+        self.assertEqual(brief.test_summaries, [])
+
     def test_json_output_is_structured(self):
         brief = analyze_log(PYTEST_LOG, source="pytest.log")
         payload = json.loads(render_json(brief))

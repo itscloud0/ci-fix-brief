@@ -28,9 +28,20 @@ TEST_SUMMARY_PATTERNS = [
     re.compile(r"\b(?P<summary>Tests?:\s+.+failed.+)\b", re.IGNORECASE),
     re.compile(r"\b(?P<summary>Test Suites?:\s+.+failed.+)\b", re.IGNORECASE),
     re.compile(r"^(?P<summary>FAIL\s+.+)$"),
+    re.compile(r"^(?P<summary>test result: FAILED\. .+)$"),
 ]
 
 FINDING_PATTERNS = [
+    (
+        re.compile(r"^test\s+(?P<msg>\S+)\s+\.\.\.\s+FAILED$"),
+        "test",
+        "error",
+    ),
+    (
+        re.compile(r"^thread ['\"].+['\"](?:\s+\(\d+\))?\s+(?P<msg>panicked at .+)$"),
+        "runtime",
+        "error",
+    ),
     (
         re.compile(r"^--- FAIL:\s+(?P<msg>\S+)(?:\s+\([0-9.]+s\))?$"),
         "test",

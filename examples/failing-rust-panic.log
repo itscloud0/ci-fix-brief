@@ -1,0 +1,17 @@
+Run cargo test --test configuration
+running 1 test
+test config::requires_endpoint ... FAILED
+
+failures:
+
+---- config::requires_endpoint stdout ----
+thread 'config::requires_endpoint' panicked at tests/configuration.rs:9:5:
+missing endpoint in synthetic configuration
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+failures:
+    config::requires_endpoint
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--test configuration`

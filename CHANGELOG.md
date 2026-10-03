@@ -4,6 +4,10 @@ All notable changes to this project will be documented here.
 
 ## Unreleased
 
+- Detect named Rust Cargo/libtest failures, panic locations, and failed test
+  summaries; add synthetic assertion/panic fixtures, deterministic rendering
+  coverage, redaction checks, and passing/ignored-test regression coverage.
+
 - Detect named Go test failures and subtests; add synthetic assertion and panic
   fixtures with deterministic Markdown/JSON coverage and passing-log checks.
 

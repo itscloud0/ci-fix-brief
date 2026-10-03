@@ -118,6 +118,19 @@ These synthetic fixtures show named failing tests with nearby assertion or panic
 context. Detection covers plain `go test` text; `go test -json` and Go compiler
 diagnostics are not parsed specially.
 
+Summarize Rust test assertion failures and panics:
+
+```bash
+ci-fix-brief examples/failing-rust-test.log --context 3
+ci-fix-brief examples/failing-rust-panic.log --format json
+```
+
+These synthetic fixtures cover plain `cargo test`/libtest output: named failing
+tests, panic locations and nearby reasons, and the failed test summary. The
+formats follow the [Rust book's test examples](https://doc.rust-lang.org/book/ch11-01-writing-tests.html).
+Rust compiler diagnostics, nextest output, and structured test JSON are not
+parsed specially. Increase `--context` to keep longer assertion details.
+
 ## Common Use Cases
 
 - Paste a compact CI failure brief into a coding-agent repair prompt.
@@ -174,7 +187,7 @@ when adding it to a production workflow.
 ## Roadmap
 
 - Add a `gh run view` helper mode that shells out to GitHub CLI when available.
-- Add pattern fixtures for Rust, Java, and Playwright failures.
+- Add pattern fixtures for Java and Playwright failures.
 - Add SARIF-like JSON output for downstream tools.
 
 ## Contributing
