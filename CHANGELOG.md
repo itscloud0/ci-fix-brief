@@ -4,6 +4,11 @@ All notable changes to this project will be documented here.
 
 ## Unreleased
 
+- Preserve complete multi-line GitHub Actions run scripts in command entries,
+  including raw timestamps and GitHub CLI job/step prefixes; exclude runner
+  metadata, deduplicate scripts, and render multi-line Markdown code blocks.
+  Add synthetic fixtures and deterministic/redaction/truncation regression tests.
+
 - Detect named Rust Cargo/libtest failures, panic locations, and failed test
   summaries; add synthetic assertion/panic fixtures, deterministic rendering
   coverage, redaction checks, and passing/ignored-test regression coverage.

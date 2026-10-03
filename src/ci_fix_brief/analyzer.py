@@ -159,25 +159,61 @@ def analyze_log(
     )
 
 
+# Raw Actions logs have UTC timestamps; gh adds tab-separated job/step labels.
+ACTIONS_TIMESTAMP_RE = re.compile(
+    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z[ \t]"
+)
+
+
+def _command_line(line: str) -> str:
+    labelled = line.split("\t", 2)
+    if len(labelled) == 3 and ACTIONS_TIMESTAMP_RE.match(labelled[2]):
+        line = labelled[2]
+    return ACTIONS_TIMESTAMP_RE.sub("", line, count=1)
+
+
 def _detect_commands(lines: Iterable[str]) -> list[str]:
     commands: list[str] = []
     seen: set[str] = set()
+    lines = [_command_line(line) for line in lines]
+    index = 0
 
-    for line in lines:
-        stripped = line.strip()
+    while index < len(lines) and len(commands) < 12:
+        stripped = lines[index].strip()
         command = ""
-        if stripped.startswith("Run ") and len(stripped) > 4:
-            command = stripped[4:].strip()
-        elif stripped.startswith("##[group]Run "):
+        if stripped.startswith("##[group]Run "):
             command = stripped.removeprefix("##[group]Run ").strip()
+            # Runner echoes the script, then shell/env metadata, then endgroup.
+            # Only use the body when both boundaries are present; truncated logs
+            # retain the header rather than treating arbitrary output as code.
+            body: list[str] = []
+            shell_seen = False
+            end = index + 1
+            while end < len(lines):
+                content = lines[end].strip()
+                if content.startswith("##[group]"):
+                    break
+                if content == "##[endgroup]":
+                    if shell_seen:
+                        script = "\n".join(body).strip("\n")
+                        if script:
+                            command = script
+                        index = end
+                    break
+                if content.startswith("shell: "):
+                    shell_seen = True
+                elif not shell_seen:
+                    body.append(lines[end])
+                end += 1
+        elif stripped.startswith("Run ") and len(stripped) > 4:
+            command = stripped[4:].strip()
         elif stripped.startswith(COMMAND_PREFIXES):
             command = stripped[2:].strip()
 
         if command and command not in seen:
             seen.add(command)
             commands.append(command)
-        if len(commands) >= 12:
-            break
+        index += 1
 
     return commands
 
@@ -340,7 +376,12 @@ def _render_commands(commands: list[str]) -> list[str]:
         return lines
 
     for command in commands:
-        lines.append(f"- `{command}`")
+        if "\n" in command:
+            longest = max((len(run) for run in re.findall(r"`+", command)), default=0)
+            fence = "`" * max(3, longest + 1)
+            lines.extend([f"{fence}sh", command, fence, ""])
+        else:
+            lines.append(f"- `{command}`")
     lines.append("")
     return lines
 

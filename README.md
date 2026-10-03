@@ -131,6 +131,22 @@ formats follow the [Rust book's test examples](https://doc.rust-lang.org/book/ch
 Rust compiler diagnostics, nextest output, and structured test JSON are not
 parsed specially. Increase `--context` to keep longer assertion details.
 
+Summarize a multi-line GitHub Actions `run` block:
+
+```bash
+ci-fix-brief examples/failing-actions-multiline.log
+```
+
+Complete `##[group]Run` blocks retain the echoed script as one command entry,
+including line breaks, indentation, and shell continuations. The repeated first
+line, shell metadata, environment metadata, and subsequent output are excluded.
+Command detection accepts raw UTC-timestamped Actions logs and the tab-separated
+job/step prefixes from `gh run view --log`. Markdown uses a shell code block;
+JSON keeps the script in a single string. Truncated groups fall back to the
+first-line header. This is script extraction, not shell parsing or proof that
+every command in the block ran. Finding and test-summary heuristics retain their
+existing format limitations.
+
 ## Common Use Cases
 
 - Paste a compact CI failure brief into a coding-agent repair prompt.

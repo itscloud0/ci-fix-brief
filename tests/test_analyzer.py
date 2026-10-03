@@ -105,6 +105,38 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(brief.findings, [])
         self.assertEqual(brief.test_summaries, [])
 
+    def test_actions_multiline_fixture_preserves_complete_script(self):
+        log = (Path(__file__).resolve().parents[1] / "examples/failing-actions-multiline.log").read_text()
+        script = "python -m pip install .\npython -m pytest \\\n  tests/test_health.py \\\n  --maxfail=1"
+        for wrapped in (log, "".join("test\tRun tests\t" + line + "\n" for line in log.splitlines())):
+            brief = analyze_log(wrapped)
+            self.assertEqual(brief.commands, [script])
+            self.assertNotIn("shell:", brief.commands[0])
+            self.assertNotIn("MODE:", brief.commands[0])
+            self.assertEqual(json.loads(render_json(brief))["commands"], [script])
+            self.assertIn("```sh\n" + script + "\n```", render_markdown(brief))
+            self.assertEqual(render_json(brief), render_json(analyze_log(wrapped)))
+
+    def test_actions_script_redaction_deduplication_and_boundaries(self):
+        block = "##[group]Run echo start\n\x1b[36;1mecho start\x1b[0m\nexport password=synthetic-value\npytest\nshell: bash -e {0}\nenv:\n  MODE: synthetic\n##[endgroup]\n"
+        brief = analyze_log(block + "unprefixed output\n" + block + "$ echo done\n")
+        self.assertEqual(brief.commands, ["echo start\nexport password=[REDACTED]\npytest", "echo done"])
+        self.assertNotIn("synthetic-value", render_json(brief))
+        self.assertEqual(len(analyze_log(block + "".join("$ cmd%d\n" % n for n in range(20))).commands), 12)
+
+    def test_incomplete_actions_group_does_not_turn_output_into_script(self):
+        for log in ("##[group]Run pytest\noutput line\n", "##[group]Run pytest\noutput line\n##[endgroup]\n",
+                    "##[group]Run pytest\npytest\nshell: bash -e {0}\noutput line\n"):
+            self.assertEqual(analyze_log(log).commands, ["pytest"])
+        self.assertEqual(analyze_log("Run pytest\n$ pytest\n+ cargo test\n> go test ./...\n").commands,
+                         ["pytest", "cargo test", "go test ./..."])
+
+    def test_multiline_markdown_fence_keeps_embedded_backticks_inside_script(self):
+        script = 'printf "```"\npytest'
+        log = '##[group]Run printf "```"\n' + script + '\nshell: bash -e {0}\n##[endgroup]\n'
+        self.assertEqual(analyze_log(log).commands, [script])
+        self.assertIn("````sh\n" + script + "\n````", render_markdown(analyze_log(log)))
+
     def test_json_output_is_structured(self):
         brief = analyze_log(PYTEST_LOG, source="pytest.log")
         payload = json.loads(render_json(brief))
